@@ -20,7 +20,7 @@ public class Student {
     @Setter
     private String name;
 
-    private List<Integer> marks = new ArrayList<>();
+    private final List<Integer> marks = new ArrayList<>();
 
     public Student(String name) {
         this.name = name;
