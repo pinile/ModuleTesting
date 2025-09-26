@@ -61,7 +61,7 @@ public class Tests {
     @DisplayName("Негативный тест метода equals")
     public void testEqualsNull() {
         Student student = new Student("123");
-        Assertions.assertNotEquals(null, student);
+        Assertions.assertFalse(student.equals(null));
     }
 
     @Test
