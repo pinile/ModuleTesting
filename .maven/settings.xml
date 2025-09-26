@@ -1,0 +1,19 @@
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0">
+    <mirrors>
+
+    </mirrors>
+
+    <profiles>
+        <profile>
+            <id>local</id>
+            <repository>
+                <id>central</id>
+                <url>https://repo.maven.apache.org/maven2</url>
+            </repository>
+        </profile>
+    </profiles>
+
+    <activeProfiles>
+        <activeProfile>local</activeProfile>
+    </activeProfiles>
+</settings>
