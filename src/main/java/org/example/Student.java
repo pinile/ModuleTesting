@@ -2,7 +2,6 @@ package org.example;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.SneakyThrows;
 import lombok.ToString;
 
 import java.util.ArrayList;
@@ -13,35 +12,33 @@ import java.util.Objects;
 @ToString
 public class Student {
 
+    private final List<Integer> grades = new ArrayList<>();
     @Setter
     private StudentRepo studentRepo;
-
     @Getter
     @Setter
     private String name;
-
-    private final List<Integer> marks = new ArrayList<>();
 
     public Student(String name) {
         this.name = name;
     }
 
-    public List<Integer> getMarks() {
-        return Collections.unmodifiableList(marks);
+    public List<Integer> getGrades() {
+        return Collections.unmodifiableList(grades);
     }
 
-    public void setMark(int mark) {
-        if (mark < 2 || mark > 5) {
-            throw new IllegalArgumentException("Mark must be between 2 and 5. Got: " + mark);
+    public void setGrade(int grade) {
+        if (grade < 2 || grade > 5) {
+            throw new IllegalArgumentException("Mark must be between 2 and 5. Got: " + grade);
         }
-        marks.add(mark);
+        grades.add(grade);
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
         hash = 13 * hash + Objects.hashCode(this.name);
-        hash = 13 * hash + Objects.hashCode(this.marks);
+        hash = 13 * hash + Objects.hashCode(this.grades);
         return hash;
     }
 
@@ -60,15 +57,18 @@ public class Student {
         if (!Objects.equals(this.name, other.name)) {
             return false;
         }
-        return Objects.equals(this.name, other.name);
+        return Objects.equals(this.grades, other.grades);
     }
 
-    @SneakyThrows
     public int rating() {
-        return studentRepo.getRatingForGradeSum(
-                marks.stream()
-                        .mapToInt(i -> i)
-                        .sum()
-        );
+        if (studentRepo == null) {
+            throw new IllegalStateException("Student repo is null");
+        } else {
+            return studentRepo.getRatingForGradeSum(
+                    grades.stream()
+                            .mapToInt(i -> i)
+                            .sum()
+            );
+        }
     }
 }
