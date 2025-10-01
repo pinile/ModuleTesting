@@ -28,6 +28,15 @@ public class Tests {
     }
 
     @Test
+    @DisplayName("Пустое репо для студента кидает исключение")
+    public void testRatingNullRepo() {
+        Student student = new Student("vasya");
+        student.setGrade(3);
+
+        Assertions.assertThrows(IllegalStateException.class, () -> student.rating());
+    }
+
+    @Test
     @DisplayName("Тест рейтинга для студента")
     public void testRating() {
         Student student = new Student("vasya");
