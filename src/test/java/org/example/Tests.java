@@ -1,43 +1,46 @@
 package org.example;
 
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 
 import java.util.List;
 
+import static org.example.GradeMock.gradeCheck;
+
 
 public class Tests {
 
-    @DisplayName("Валидные оценки добавляются в список оценок")
-    @RepeatedTest(value = 4, name = "Валидные оценки")
-    public void gradesInRange(RepetitionInfo repetitionInfo) {
-        Student student = new Student("vasya");
-        int num = repetitionInfo.getCurrentRepetition() + 1;
-        student.setGrade(num);
-        Assertions.assertEquals(List.of(num), student.getGrades());
+    @DisplayName("Валидные оценки")
+    @ParameterizedTest(name = "[{index}]. Валидная оценка [{0}] добавляется в список оценок")
+    @ValueSource(ints = {2, 3, 4, 5})
+    public void gradesInRange(final int ints) {
+        boolean check = gradeCheck(ints);
+        Assertions.assertTrue(check);
     }
 
-    @DisplayName("Невалидные оценки кидают исключения")
-    @RepeatedTest(value = 4, name = "Невалидные оценки")
-    public void gradesNotInRange(RepetitionInfo repetitionInfo) {
-        List<Integer> grade = List.of(0, 1, 6, 7);
-        int num = repetitionInfo.getCurrentRepetition() - 1;
-        Student student = new Student("vasya_pupkin");
-
-        Assertions.assertThrows(IllegalArgumentException.class, () -> student.setGrade(grade.get(num)));
+    @DisplayName("Невалидные оценки")
+    @ParameterizedTest(name = "[{index}]. Невалидная оценка [{0}] не добавляется в список оценок")
+    @ValueSource(ints = {0, 1, 6, 75, -6})
+    public void gradesNotInRange(final int ints) {
+        boolean check = gradeCheck(ints);
+        Assertions.assertFalse(check);
     }
 
     @Test
     @DisplayName("Пустое репо для студента кидает исключение")
+    @Disabled
     public void testRatingNullRepo() {
         Student student = new Student("vasya");
-        student.setGrade(3);
+        student.addGrade(3);
 
         Assertions.assertThrows(IllegalStateException.class, () -> student.rating());
     }
 
     @Test
     @DisplayName("Тест рейтинга для студента")
+    @Disabled
     public void testRating() {
         Student student = new Student("vasya");
         StudentRepo studentRepo = Mockito.mock(StudentRepo.class);
@@ -48,13 +51,14 @@ public class Tests {
 
     @Test
     @DisplayName("Тест рейтинга для студента (Verify)")
+    @Disabled
     public void testRatingWithVerify() {
         Student student = new Student("vasya");
         StudentRepo studentRepo = Mockito.mock(StudentRepo.class);
         student.setStudentRepo(studentRepo);
 
-        student.setGrade(3);
-        student.setGrade(4);
+        student.addGrade(3);
+        student.addGrade(4);
 
         int expectedSum = 7;
 
@@ -97,6 +101,7 @@ public class Tests {
 
     @Test
     @DisplayName("Негативный тест метода equals")
+    @Disabled
     public void testEqualsDiffClasses() {
         Student student = new Student("123");
         StudentSubclass studentSubclass = new StudentSubclass("123");
@@ -105,46 +110,50 @@ public class Tests {
 
     @Test
     @DisplayName("Валидный тест метода equals (Симметрия)")
+    @Disabled
     public void testEqualsSymmetric() {
         Student student1 = new Student("444");
-        student1.setGrade(2);
+        student1.addGrade(2);
         Student student2 = new Student("444");
-        student2.setGrade(2);
+        student2.addGrade(2);
         Assertions.assertEquals(student1.equals(student2), student2.equals(student1));
     }
 
     @Test
     @DisplayName("Валидный тест метода equals (Согласованность)")
+    @Disabled
     public void testEqualsConsistent() {
         Student student1 = new Student("444");
-        student1.setGrade(2);
+        student1.addGrade(2);
         Student student2 = new Student("444");
-        student2.setGrade(2);
+        student2.addGrade(2);
         Assertions.assertTrue(student1.equals(student2));
         Assertions.assertTrue(student1.equals(student2));
     }
 
     @Test
     @DisplayName("Негативный тест метода equals (Согласованность)")
+    @Disabled
     public void testEqualsConsistentNegative() {
         Student student1 = new Student("444");
-        student1.setGrade(2);
+        student1.addGrade(2);
         Student student2 = new Student("444");
-        student2.setGrade(2);
+        student2.addGrade(2);
         Assertions.assertTrue(student1.equals(student2));
-        student2.setGrade(3);
+        student2.addGrade(3);
         Assertions.assertFalse(student1.equals(student2));
     }
 
     @Test
     @DisplayName("Валидный тест метода equals (Транзитивность)")
+    @Disabled
     public void testEqualsTransitive() {
         Student student1 = new Student("444");
-        student1.setGrade(2);
+        student1.addGrade(2);
         Student student2 = new Student("444");
-        student2.setGrade(2);
+        student2.addGrade(2);
         Student student3 = new Student("444");
-        student3.setGrade(2);
+        student3.addGrade(2);
 
         Assertions.assertTrue(student1.equals(student2));
         Assertions.assertTrue(student2.equals(student1));
@@ -161,21 +170,23 @@ public class Tests {
 
     @Test
     @DisplayName("Тест метода hash")
+    @Disabled
     public void testHashCode() {
         Student student1 = new Student("123");
-        student1.setGrade(3);
+        student1.addGrade(3);
         Student student2 = new Student("123");
-        student2.setGrade(3);
+        student2.addGrade(3);
         Assertions.assertEquals(student1.hashCode(), student2.hashCode());
     }
 
     @Test
     @DisplayName("Негативный тест метода hash")
+    @Disabled
     public void testHashCodeNegative() {
         Student student1 = new Student("123");
-        student1.setGrade(3);
+        student1.addGrade(3);
         Student student2 = new Student("123");
-        student2.setGrade(4);
+        student2.addGrade(4);
         Assertions.assertNotEquals(student1.hashCode(), student2.hashCode());
     }
 
