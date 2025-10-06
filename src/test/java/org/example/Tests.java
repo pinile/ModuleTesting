@@ -1,13 +1,23 @@
 package org.example;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import java.io.IOException;
 import java.util.List;
 
-import static org.example.GradeMock.gradeCheck;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 
 
 public class Tests {
@@ -16,16 +26,97 @@ public class Tests {
     @ParameterizedTest(name = "[{index}]. Валидная оценка [{0}] добавляется в список оценок")
     @ValueSource(ints = {2, 3, 4, 5})
     public void gradesInRange(final int ints) {
-        boolean check = gradeCheck(ints);
-        Assertions.assertTrue(check);
+        Student student = new Student("Vasya");
+
+        CloseableHttpClient mockClient = mock();
+        CloseableHttpResponse mockResponse = mock();
+        HttpEntity mockEntity = mock();
+
+        //мок для статических методов
+        try (MockedStatic<HttpClients> mockedHttpClients = mockStatic(HttpClients.class);
+             MockedStatic<EntityUtils> mockedEntityUtils = mockStatic(EntityUtils.class)) {
+
+            //при вызове HttpClients.createDefault() -> mockClient
+            mockedHttpClients.when(HttpClients::createDefault).thenReturn(mockClient);
+
+            //при вызове execute(response) -> mockResponse
+            when(mockClient.execute(any(HttpGet.class))).thenReturn(mockResponse);
+
+            //при вызове response.getEntity() -> mockEntity
+            when(mockResponse.getEntity()).thenReturn(mockEntity);
+
+            //при вызове EntityUtils.toString(entity)) -> true
+            mockedEntityUtils.when(() -> EntityUtils.toString(mockEntity)).thenReturn("true");
+
+            student.addGrade(ints);
+
+            assertThat(student.getGrades()
+                    .contains(ints))
+                    .isTrue();
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @DisplayName("Некорректный ответ сервера для валидной оценки")
+    @ParameterizedTest(name = "[{index}]. Валидная оценка [{0}] не добавляется в список оценок")
+    @ValueSource(ints = {2, 3, 4, 5})
+    public void gradesInRangeProvideInvalidServerResponse(final int ints) {
+        Student student = new Student("Vasya");
+
+        CloseableHttpClient mockClient = mock();
+        CloseableHttpResponse mockResponse = mock();
+        HttpEntity mockEntity = mock();
+
+        try (MockedStatic<HttpClients> mockedHttpClients = mockStatic(HttpClients.class);
+             MockedStatic<EntityUtils> mockedEntityUtils = mockStatic(EntityUtils.class)) {
+
+            mockedHttpClients.when(HttpClients::createDefault).thenReturn(mockClient);
+
+            when(mockClient.execute(any(HttpGet.class))).thenReturn(mockResponse);
+
+            when(mockResponse.getEntity()).thenReturn(mockEntity);
+
+            mockedEntityUtils.when(() -> EntityUtils.toString(mockEntity)).thenReturn("jj");
+
+            assertThatThrownBy(() -> student.addGrade(ints))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining(ints + " is wrong grade");
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @DisplayName("Невалидные оценки")
     @ParameterizedTest(name = "[{index}]. Невалидная оценка [{0}] не добавляется в список оценок")
     @ValueSource(ints = {0, 1, 6, 75, -6})
     public void gradesNotInRange(final int ints) {
-        boolean check = gradeCheck(ints);
-        Assertions.assertFalse(check);
+        Student student = new Student("Vasya");
+
+        CloseableHttpClient mockClient = mock();
+        CloseableHttpResponse mockResponse = mock();
+        HttpEntity mockEntity = mock();
+
+        try (MockedStatic<HttpClients> mockedHttpClients = mockStatic(HttpClients.class);
+             MockedStatic<EntityUtils> mockedEntityUtils = mockStatic(EntityUtils.class)) {
+
+            mockedHttpClients.when(HttpClients::createDefault).thenReturn(mockClient);
+
+            when(mockClient.execute(any(HttpGet.class))).thenReturn(mockResponse);
+
+            when(mockResponse.getEntity()).thenReturn(mockEntity);
+
+            mockedEntityUtils.when(() -> EntityUtils.toString(mockEntity)).thenReturn("false");
+
+            assertThatThrownBy(() -> student.addGrade(ints))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining(ints + " is wrong grade");
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test
@@ -35,18 +126,36 @@ public class Tests {
         Student student = new Student("vasya");
         student.addGrade(3);
 
-        Assertions.assertThrows(IllegalStateException.class, () -> student.rating());
+        Assertions.assertThrows(IllegalStateException.class, student::rating);
     }
 
     @Test
     @DisplayName("Тест рейтинга для студента")
-    @Disabled
     public void testRating() {
         Student student = new Student("vasya");
-        StudentRepo studentRepo = Mockito.mock(StudentRepo.class);
-        student.setStudentRepo(studentRepo);
-        Mockito.when(studentRepo.getRatingForGradeSum(Mockito.anyInt())).thenReturn(10);
-        Assertions.assertEquals(10, student.rating());
+
+        CloseableHttpClient mockClient = mock();
+        CloseableHttpResponse mockResponse = mock();
+        HttpEntity mockEntity = mock();
+
+        try (MockedStatic<HttpClients> mockedHttpClients = mockStatic(HttpClients.class);
+             MockedStatic<EntityUtils> mockedEntityUtils = mockStatic(EntityUtils.class)) {
+
+            mockedHttpClients.when(HttpClients::createDefault).thenReturn(mockClient);
+
+            when(mockClient.execute(any(HttpGet.class))).thenReturn(mockResponse);
+
+            when(mockResponse.getEntity()).thenReturn(mockEntity);
+
+            mockedEntityUtils.when(() -> EntityUtils.toString(mockEntity)).thenReturn("10");
+
+            assertThat(student.rating())
+                    .isEqualTo(10);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     @Test
@@ -54,7 +163,7 @@ public class Tests {
     @Disabled
     public void testRatingWithVerify() {
         Student student = new Student("vasya");
-        StudentRepo studentRepo = Mockito.mock(StudentRepo.class);
+        StudentRepo studentRepo = mock(StudentRepo.class);
         student.setStudentRepo(studentRepo);
 
         student.addGrade(3);
@@ -62,7 +171,7 @@ public class Tests {
 
         int expectedSum = 7;
 
-        Mockito.when(studentRepo.getRatingForGradeSum(expectedSum)).thenReturn(99);
+        when(studentRepo.getRatingForGradeSum(expectedSum)).thenReturn(99);
 
         int rating = student.rating();
 
